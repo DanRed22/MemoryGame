@@ -32,11 +32,11 @@ public class Main extends Application {
     private static final int WIDTH = 1366;
     private static final int HEIGHT = 768;
     private static final Color BACKGROUND_COLOR = Color.WHITE;
-    private static final int ROW_COUNT = 12;
-    private static final int COL_COUNT = 8;
+    private static final int ROW_COUNT = 18;
+    private static final int COL_COUNT = 12;
     private static final int MAX_LIVES = 10;
 
-    public static final int TILE_SIZE = 80;
+    public static final int TILE_SIZE = 50;
 
     private GridPane gridPane = new GridPane();
     private BorderPane root = new BorderPane();
@@ -226,12 +226,18 @@ public class Main extends Application {
                 	powerUpSFX = "src/res/powerup.mp3";
                     // Apply multiplier power-up
                     // Deduct points from the score
-                    setScore(getScore() - 300);
-                    if (this.multiplier < 5) {
-                    	this.multiplier = 5;
-                    }else{
-                    	this.multiplier += 5;
-                    }
+                	
+                	 if (this.multiplier < 10) {
+	                    setScore(getScore() - 300);
+	                    if (this.multiplier < 5) {
+	                    	this.multiplier = 5;
+	                    }else if (this.multiplier >= 5){
+	                    	this.multiplier = 10;
+	                    	
+	                    }
+                	 }else {
+                		 showMaxMultiplier();
+                	 }
                     
                 }
                 break;
@@ -277,7 +283,14 @@ public class Main extends Application {
         
     }
     
-    private void showInsufficientCoinsAlert() {
+    private void showMaxMultiplier() {
+    	Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Multiplier is at Maximum!");
+        alert.setHeaderText("Multiplier is at Maximum!");
+        alert.showAndWait();
+	}
+
+	private void showInsufficientCoinsAlert() {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Insufficient Coins");
         alert.setHeaderText("Not Enough Coins");
@@ -514,7 +527,9 @@ public class Main extends Application {
             remainingPairs--;
             firstTile = null;
             secondTile = null;
-            multiplier++;
+            if (this.multiplier < 10) {
+            	multiplier++;
+            }
             
             if (multiplier >= 2) {
             	filepath = "src/res/powerup.mp3";
