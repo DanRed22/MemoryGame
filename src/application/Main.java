@@ -32,10 +32,11 @@ public class Main extends Application {
     private static final int WIDTH = 1366;
     private static final int HEIGHT = 768;
     private static final Color BACKGROUND_COLOR = Color.WHITE;
-    private static final int ROW_COUNT = 8;
-    private static final int COL_COUNT = 6;
+    private static final int ROW_COUNT = 12;
+    private static final int COL_COUNT = 8;
+    private static final int MAX_LIVES = 10;
 
-    public static final int TILE_SIZE = 100;
+    public static final int TILE_SIZE = 80;
 
     private GridPane gridPane = new GridPane();
     private BorderPane root = new BorderPane();
@@ -65,6 +66,11 @@ public class Main extends Application {
 
     
     private VBox powerUpsBox;
+    // Create power-ups
+    PowerUp shieldPowerUp = new PowerUp(PowerUp.PowerUpType.SHIELD, 500);
+    PowerUp lovePotionPowerUp = new PowerUp(PowerUp.PowerUpType.LOVE_POTION, 500);
+    PowerUp multiplierPowerUp = new PowerUp(PowerUp.PowerUpType.MULTIPLIER, 300);
+    PowerUp thirdEyePowerUp = new PowerUp(PowerUp.PowerUpType.THIRD_EYE, 1000);
     
     private Text scoreText;
     private Text livesText;
@@ -76,15 +82,18 @@ public class Main extends Application {
     private Pane overlayPane;
     Button retryButton, exitButton;
 
+    private ColumnConstraints gameAreaColumnConstraints;
+    private RowConstraints gameAreaRowConstraints;
+    
     
     private MediaPlayer mediaPlayer;
     
     private static Media chainFeedback;
     private static MediaPlayer chainSound;
     
-    private static int multiplier = 1;
+    private int multiplier = 1;
     
-    private static int lives = 10;
+    private int lives = MAX_LIVES;
     private static int shield = 0;
     
     
@@ -105,11 +114,7 @@ public class Main extends Application {
             powerUpsBox.setStyle("-fx-background-color: rgba(255, 255, 255, 0.7);");
             root.setLeft(powerUpsBox);
 
-            // Create power-ups
-            PowerUp shieldPowerUp = new PowerUp(PowerUp.PowerUpType.SHIELD, 500);
-            PowerUp lovePotionPowerUp = new PowerUp(PowerUp.PowerUpType.LOVE_POTION, 500);
-            PowerUp multiplierPowerUp = new PowerUp(PowerUp.PowerUpType.MULTIPLIER, 300);
-            PowerUp thirdEyePowerUp = new PowerUp(PowerUp.PowerUpType.THIRD_EYE, 1000);
+            
 
             // Add power-ups to the power-ups box
             powerUpsBox.getChildren().addAll(shieldPowerUp, lovePotionPowerUp, multiplierPowerUp, thirdEyePowerUp);
@@ -131,11 +136,11 @@ public class Main extends Application {
             
             mediaPlayer.play();
             
-            ColumnConstraints gameAreaColumnConstraints = new ColumnConstraints(TILE_SIZE);
+            gameAreaColumnConstraints = new ColumnConstraints(TILE_SIZE);
             gameAreaColumnConstraints.setHgrow(Priority.ALWAYS);
             gridPane.getColumnConstraints().addAll(gameAreaColumnConstraints);
 
-            RowConstraints gameAreaRowConstraints = new RowConstraints(TILE_SIZE);
+            gameAreaRowConstraints = new RowConstraints(TILE_SIZE);
             gameAreaRowConstraints.setVgrow(Priority.ALWAYS);
             gridPane.getRowConstraints().addAll(gameAreaRowConstraints);
 
@@ -143,9 +148,11 @@ public class Main extends Application {
             gridPane.setPadding(new Insets(10));
             gridPane.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
                 if (gameWon) {
-                    //event.consume(); // Consume the event, preventing further interaction
+                    event.consume(); // Consume the event, preventing further interaction
                 }
             });
+            
+            
             root.setCenter(gridPane);
             root.setBackground(BACKGROUND);
 
@@ -196,7 +203,7 @@ public class Main extends Application {
                     // Apply shield power-up
                     // Deduct points from the score
                     setScore(getScore() - 500);
-                    // TODO: Implement shield logic
+
                     this.shield = 5;
                     
                 }
@@ -209,7 +216,6 @@ public class Main extends Application {
                     // Apply love potion power-up
                     // Deduct points from the score
                     setScore(getScore() - 500);
-                    // TODO: Implement love potion logic
                     this.lives+= 5;
                 }
                 break;
@@ -221,8 +227,12 @@ public class Main extends Application {
                     // Apply multiplier power-up
                     // Deduct points from the score
                     setScore(getScore() - 300);
-                    // TODO: Implement multiplier logic
-                    this.multiplier = 5;
+                    if (this.multiplier < 5) {
+                    	this.multiplier = 5;
+                    }else{
+                    	this.multiplier += 5;
+                    }
+                    
                 }
                 break;
             case THIRD_EYE:
@@ -251,6 +261,7 @@ public class Main extends Application {
                 }
                 break;
         }
+        
         try {
         	mediaPowerUpSFX = new Media(new File(powerUpSFX).toURI().toString());
             mediaPlayerPowerUpSFX = new MediaPlayer(mediaPowerUpSFX);
@@ -336,22 +347,29 @@ public class Main extends Application {
         gameWonText.setFill(Color.BLACK);
         overlayPane.getChildren().add(gameWonText);
 
-        retryButton = new Button("Retry");
+        retryButton = new Button("Retry (R)");
         retryButton.setFont(Font.font(20));
-        retryButton.setLayoutX(100);
+        retryButton.setLayoutX(0);
         retryButton.setMouseTransparent(true);
         retryButton.setLayoutY(150);
         
        
         retryButton.setOnMouseClicked(event -> {
             // Handle retry button action
-            System.out.println("RESET!");
-            resetGame();
-            primaryStage.setScene(scene);
-            overlayPane.setVisible(false);
+        	handleRetryButton();
+        });
+        
+        overlayPane.setOnKeyPressed(event->{
+        	if (event.getCode().toString().equals("R")) {
+           handleRetryButton();
+ 
+        } else if (event.getCode().toString().equals("X")) {
+            primaryStage.close();
+          
+        }
         });
 
-        exitButton = new Button("Exit");
+        exitButton = new Button("Exit (X)");
         
         exitButton.setFont(Font.font(20));
         exitButton.setLayoutX(200);
@@ -364,6 +382,8 @@ public class Main extends Application {
         retryButton.setMouseTransparent(true);
         exitButton.setMouseTransparent(true);
         overlayPane.getChildren().addAll(retryButton, exitButton);
+        root.getChildren().clear();
+        root.getChildren().removeAll(gridPane);
         root.getChildren().add(overlayPane);
         
     }
@@ -373,23 +393,73 @@ public class Main extends Application {
         remainingPairs = ROW_COUNT * COL_COUNT / 2;
         score = 0;
         multiplier = 1;
-        lives = 10;
+        lives = MAX_LIVES;
         shield = 0;
         gameWon = false;
+        int x, y;
+
+        root.getChildren().clear();
+
+        // Add the background and power-ups box
+        root.setBackground(BACKGROUND);
+        root.setLeft(powerUpsBox);
         tiles = new Tile[ROW_COUNT][COL_COUNT];
+
         // Re-create tiles and add them to the gridPane
-        for (int x = 0; x < ROW_COUNT; x++) {
-            for (int y = 0; y < COL_COUNT; y++) {
+        for (x = 0; x < ROW_COUNT; x++) {
+            for (y = 0; y < COL_COUNT; y++) {
+                final int X = x;
+                final int Y = y;
                 tiles[x][y] = new Tile(getRandomFruit(), x, y);
-                int finalX = x;
-                int finalY = y;
-                tiles[x][y].setOnMouseClicked(event -> handleTileClick(finalX, finalY, this.scoreText));
+                tiles[x][y].setOnMouseClicked(event -> handleTileClick(X, Y, this.scoreText));
                 gridPane.add(tiles[x][y], x, y);
             }
         }
+
+        // Add the gridPane to the center of the root
+        root.setCenter(gridPane);
+
+        // Clear matched fruits from the gridPane
+        gridPane.getChildren().removeIf(node -> node instanceof Tile && ((Tile) node).isMatched());
+        gridPane.getChildren().removeIf(node -> node instanceof Tile && ((Tile) node).isVisible() == false);
+
+        // Reset the state of matched fruits
+        for (Tile[] tileRow : tiles) {
+            for (Tile tile : tileRow) {
+                if (tile.isMatched()) {
+                    tile.setMatched(false);
+                    tile.setDisable(false);
+                }
+            }
+        }
+
+        // Add the score, lives, and multiplier texts
+        livesText = new Text("Lives: " + lives);
+        livesText.setFont(Font.font(50));
+        livesText.setFill(Color.BLACK);
+
+        scoreText = new Text("Score: " + score);
+        scoreText.setFont(Font.font(50));
+        scoreText.setFill(Color.BLACK);
+        scoreText.setLayoutX(WIDTH - 300);
+        scoreText.setLayoutY(100);
+
+        multiplierText = new Text("Current Multiplier: " + multiplier + "x");
+        multiplierText.setFont(Font.font(20));
+        multiplierText.setLayoutX(WIDTH - 300);
+        multiplierText.setLayoutY(300);
+
+        root.getChildren().addAll(scoreText, livesText, multiplierText);
     }
 
 
+
+    public void handleRetryButton() {
+    	 System.out.println("RESET!");
+         resetGame();
+         primaryStage.setScene(scene);
+         overlayPane.setVisible(false);
+    }
 
     public void handleTileClick(int x, int y, Text scoreText) {
         if (firstTile != null && secondTile != null) {
