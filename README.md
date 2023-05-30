@@ -2,9 +2,9 @@
 This project is made in the completion as a Course requirement of CIS 2103 - Object Oriented Programming under our Instructor: Mr. Gran Sabandal. 
 
 Developers
-Nichole Vine Alburo
-Julie Christy Saraosos
-Angelou Sereño 
+- Nichole Vine Alburo
+- Julie Christy Saraosos
+- Angelou Sereño 
 
 Genre: Puzzle, Strategy, 2D
 Platform: Java with JavaFX
